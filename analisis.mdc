@@ -1,0 +1,111 @@
+### Análisis del Proyecto CRM para un Box de Crossfit
+
+#### Contexto y Objetivos
+El proyecto consiste en un sistema de gestión de relaciones con los clientes (CRM) específico para un box de crossfit. El objetivo principal es facilitar la gestión de leads, usuarios, clases, reservas, asistencias, membresías y packs de clases. Además, el sistema debe proporcionar funcionalidades de autenticación y control de roles para asegurar que solo los usuarios autorizados puedan acceder a ciertas funcionalidades.
+
+#### Análisis de Funcionalidades y Requerimientos
+
+##### 1. Leads
+- **Definición**: Un lead es un potencial cliente que ha mostrado interés en el box de crossfit. Puede ser capturado a través de formularios de contacto, eventos o referencias.
+- **Lógica**: Los leads deben poder ser creados, actualizados y tener un estado que los categorice en "nuevo", "pendiente", "inscrito" o "descartado".
+- **Restricciones**:
+  - Un lead debe tener un nombre y un estado.
+  - El email y el teléfono son opcionales pero útiles para el seguimiento.
+  - No se permiten leads duplicados.
+- **Utilidad**: Ayuda a la gestión de la captación de nuevos clientes y el seguimiento de su interés.
+- **Permisos**:
+  - **Crear**: Admin y Coach.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin y Coach.
+
+##### 2. Usuarios
+- **Definición**: Representan a las personas que interactúan con el sistema, incluyendo administradores, entrenadores y miembros.
+- **Lógica**: Cada usuario tiene un rol que determina sus permisos dentro del sistema. Los datos básicos incluyen nombre, email, teléfono y idioma preferido.
+- **Restricciones**:
+  - El email debe ser único.
+  - El rol debe ser uno de los valores predefinidos: "admin", "coach" o "miembro".
+- **Utilidad**: Permite la gestión de los diferentes tipos de usuarios y sus permisos.
+- **Permisos**:
+  - **Crear**: Admin.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin.
+
+##### 3. Clases Recurrentes
+- **Definición**: Son las clases que se repiten con una frecuencia determinada (por ejemplo, todos los lunes a las 18:00).
+- **Lógica**: Cada clase recurrente tiene un nombre, día de la semana, hora de inicio, duración y un entrenador asignado.
+- **Restricciones**:
+  - La hora de inicio debe ser válida.
+  - La duración debe ser un número positivo.
+- **Utilidad**: Facilita la planificación y gestión de las clases semanales.
+- **Permisos**:
+  - **Crear**: Admin y Coach.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin y Coach.
+
+##### 4. Instancias de Clase
+- **Definición**: Representan una clase específica que ocurre en una fecha y hora determinadas.
+- **Lógica**: Cada instancia tiene una fecha, hora de inicio, duración, estado y un entrenador asignado.
+- **Restricciones**:
+  - La fecha y hora deben ser válidas.
+  - No se permiten instancias duplicadas para una misma clase recurrente en una misma fecha.
+- **Utilidad**: Permite la gestión de las clases específicas y su estado.
+- **Permisos**:
+  - **Crear**: Admin y Coach.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin y Coach.
+
+##### 5. Reservas
+- **Definición**: Son las inscripciones de los miembros a las instancias de clase.
+- **Lógica**: Cada reserva tiene un estado que puede ser "confirmada", "lista de espera" o "cancelada".
+- **Restricciones**:
+  - Un miembro no puede reservar una misma instancia más de una vez.
+- **Utilidad**: Gestiona la inscripción de los miembros a las clases y su estado.
+- **Permisos**:
+  - **Crear**: Miembro.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin y Coach.
+
+##### 6. Asistencias
+- **Definición**: Registros de la asistencia de los miembros a las instancias de clase.
+- **Lógica**: Puede ser registrada manualmente o automáticamente.
+- **Restricciones**:
+  - Un miembro no puede tener más de un registro de asistencia para una misma instancia.
+- **Utilidad**: Permite el seguimiento de la asistencia de los miembros.
+- **Permisos**:
+  - **Crear**: Admin y Coach.
+  - **Ver**: Admin, Coach y Miembro.
+
+##### 7. Membresías y Suscripciones
+- **Definición**: Las membresías son los tipos de suscripción que ofrece el box, y las suscripciones son las adhesiones de los miembros a una membresía.
+- **Lógica**: Cada membresía tiene una duración en días. Las suscripciones tienen un estado y fechas de inicio y expiración.
+- **Restricciones**:
+  - La duración debe ser un número positivo.
+  - Las fechas deben ser válidas.
+- **Utilidad**: Gestiona las suscripciones de los miembros y su estado.
+- **Permisos**:
+  - **Crear**: Admin.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin.
+
+##### 8. Packs de Clases y Compras de Packs
+- **Definición**: Los packs son conjuntos de clases que los miembros pueden comprar, y las compras son las adquisiciones de estos packs por parte de los miembros.
+- **Lógica**: Cada pack tiene un nombre, créditos y duración. Las compras tienen un estado y un registro de créditos usados.
+- **Restricciones**:
+  - Los créditos y la duración deben ser números positivos.
+  - Los créditos usados no pueden exceder los créditos totales.
+- **Utilidad**: Permite la gestión de los packs de clases y las compras de los miembros.
+- **Permisos**:
+  - **Crear**: Admin.
+  - **Ver**: Admin, Coach y Miembro.
+  - **Modificar**: Admin.
+
+#### Análisis de la Base de Datos
+La estructura de la base de datos está bien diseñada y cubre todos los aspectos necesarios para la gestión del CRM. Las tablas están relacionadas correctamente y se han implementado restricciones y índices para asegurar la integridad y el rendimiento de los datos.
+
+- **Tablas de Estados**: Proporcionan una estructura clara para los estados de los leads, reservas, instancias de clase y suscripciones.
+- **Tablas de Usuarios y Credenciales**: Permiten la gestión de usuarios y sus credenciales de manera segura.
+- **Tablas de Clases y Instancias**: Facilitan la planificación y gestión de las clases recurrentes y sus instancias específicas.
+- **Tablas de Reservas y Asistencias**: Permiten el seguimiento de las inscripciones y asistencias de los miembros.
+- **Tablas de Membresías y Suscripciones**: Gestión de las suscripciones de los miembros.
+- **Tablas de Packs y Compras**: Gestión de los packs de clases y las compras de los miembros.
+- **Tablas de Auditoría y Migraciones**: Proporcionan funcionalidades de registro de acciones y control de versiones de la base de datos.

@@ -1,8 +1,12 @@
 // server/db/client.ts
 import { createClient } from '@libsql/client';
 
-const client = createClient({
-  url: 'file:'+process.env.TURSO_DB_PATH,
-});
+const url = process.env.TURSO_DB_PATH
+  ? (process.env.TURSO_DB_PATH.startsWith('libsql://') 
+      ? process.env.TURSO_DB_PATH 
+      : `file:${process.env.TURSO_DB_PATH}`)
+  : 'file:./db.sqlite'; // fallback local
+
+const client = createClient({ url });
 
 export default client;

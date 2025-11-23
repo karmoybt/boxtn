@@ -92,7 +92,7 @@
 
 # Generar script SQL con mejoras aplicadas
 -- ======================
--- TABLAS DE ESTADOS ESPECÍFICOS (mejor que genérico)
+-- TABLAS DE ESTADOS ESPECÍFICOS 
 -- ======================
 
 CREATE TABLE estado_lead (
