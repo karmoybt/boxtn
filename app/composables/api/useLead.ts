@@ -1,9 +1,26 @@
+// app\composables\api\useLead.ts
 import client from '~/server/db/client';
+import getPermissionsByRole from '~/server/utils/getRoles';
+import { getUserRole } from '~/server/utils/getUserRole';
+import { auditLog } from '../../server/log/useAuditLog'
 
-// Función para obtener leads con filtros opcionales
-export async function getLeads(filters: { [key: string]: string | number | boolean } = {}, userRole: string) {
-  // Verificar permisos
-  if (!['Admin', 'Coach', 'Miembro'].includes(userRole)) {
+// Tipos
+type LeadFilters = { [key: string]: string | number | boolean };
+type LeadData = {
+  id: string;
+  nombre: string;
+  email?: string;
+  telefono?: string;
+  estado_id: number;
+};
+type LeadUpdateData = Partial<Omit<LeadData, 'id'>>;
+
+// ─── READ ───────────────────────────────────────────────
+export async function getLeads(filters: LeadFilters = {}, userId: string) {
+  const roleId = await getUserRole(userId);
+  if (roleId === null) throw new Error('Usuario no encontrado.');
+  const permissions = await getPermissionsByRole(roleId);
+  if (!permissions.includes('leads:read')) {
     throw new Error('No tiene permiso para ver leads.');
   }
 
@@ -11,118 +28,109 @@ export async function getLeads(filters: { [key: string]: string | number | boole
   const params: (string | number | boolean)[] = [];
 
   if (Object.keys(filters).length > 0) {
-    const conditions = Object.keys(filters).map((key, _index) => {
-      const value = filters[key];
-      if (value === undefined) {
-        throw new Error(`El valor para el filtro ${key} es undefined.`);
-      }
-      params.push(value);
-      return `${key} = ?`;
-    }).join(' AND ');
-
+    const conditions = Object.keys(filters).map(key => `${key} = ?`).join(' AND ');
     query += ` WHERE ${conditions}`;
+    params.push(...Object.values(filters));
   }
 
   const result = await client.execute(query, params);
   return result.rows;
 }
 
-// Función para crear un lead
-export async function createLead(data: {
-  id: string;
-  nombre: string;
-  email?: string;
-  telefono?: string;
-  estado_id: number;
-}, userRole: string) {
-  // Verificar permisos
-  if (!['Admin', 'Coach'].includes(userRole)) {
+// ─── CREATE ─────────────────────────────────────────────
+export async function createLead(data: LeadData, userId: string, ip?: string, userAgent?: string) {
+  const roleId = await getUserRole(userId);
+  if (roleId === null) throw new Error('Usuario no encontrado.');
+  const permissions = await getPermissionsByRole(roleId);
+  if (!permissions.includes('leads:create')) {
     throw new Error('No tiene permiso para crear leads.');
   }
 
-  // Validaciones
-  if (!data.nombre) {
-    throw new Error('El nombre es obligatorio.');
-  }
-  if (!data.estado_id) {
-    throw new Error('El estado es obligatorio.');
-  }
+  if (!data.nombre) throw new Error('El nombre es obligatorio.');
+  if (!data.estado_id) throw new Error('El estado es obligatorio.');
 
-  // Verificar duplicados
-  const existingLead = await client.execute('SELECT * FROM leads WHERE id = ?', [data.id]);
-  if (existingLead.rows.length > 0) {
+  const existing = await client.execute('SELECT 1 FROM leads WHERE id = ?', [data.id]);
+  if (existing.rows.length > 0) {
     throw new Error('Ya existe un lead con este ID.');
   }
 
-  const query = `
-    INSERT INTO leads (
-      id,
-      nombre,
-      email,
-      telefono,
-      estado_id
-    ) VALUES (?, ?, ?, ?, ?)
-  `;
-  const params = [
-    data.id,
-    data.nombre,
-    data.email ?? null,
-    data.telefono ?? null,
-    data.estado_id
-  ];
+  await client.execute(
+    `INSERT INTO leads (id, nombre, email, telefono, estado_id) VALUES (?, ?, ?, ?, ?)`,
+    [data.id, data.nombre, data.email ?? null, data.telefono ?? null, data.estado_id]
+  );
+  await auditLog('CREAR', {
+    user_id: userId,
+    ip_address: ip,
+    user_agent: userAgent,
+    table: 'leads',
+    record_id: data.id,
+    new_value: data
+  });
 
-  await client.execute(query, params);
   return { id: data.id };
 }
 
-// Función para actualizar un lead
-export async function updateLead(id: string, data: {
-  nombre?: string;
-  email?: string;
-  telefono?: string;
-  estado_id?: number;
-}, userRole: string) {
-  // Verificar permisos
-  if (!['Admin', 'Coach'].includes(userRole)) {
+// ─── UPDATE ─────────────────────────────────────────────
+export async function updateLead(id: string, data: LeadUpdateData, userId: string, ip?: string, userAgent?: string) {
+  if (!id) throw new Error('El ID del lead es obligatorio.');
+
+  const roleId = await getUserRole(userId);
+  if (roleId === null) throw new Error('Usuario no encontrado.');
+  const permissions = await getPermissionsByRole(roleId);
+  if (!permissions.includes('leads:update')) {
     throw new Error('No tiene permiso para actualizar leads.');
   }
 
-  // Validaciones
-  if (!id) {
-    throw new Error('El ID del lead es obligatorio.');
+  const oldResult = await client.execute('SELECT * FROM leads WHERE id = ?', [id]);
+  if (oldResult.rows.length === 0) {
+    throw new Error('Lead no encontrado.');
   }
+  const oldValue = oldResult.rows[0];
 
-  const query = `
-    UPDATE leads
-    SET
-      nombre = COALESCE(?, nombre),
-      email = COALESCE(?, email),
-      telefono = COALESCE(?, telefono),
-      estado_id = COALESCE(?, estado_id)
-    WHERE id = ?
-  `;
-  const params = [
-    data.nombre ?? null,
-    data.email ?? null,
-    data.telefono ?? null,
-    data.estado_id ?? null,
-    id
-  ];
+  await client.execute(
+    `UPDATE leads SET nombre = COALESCE(?, nombre), email = COALESCE(?, email), telefono = COALESCE(?, telefono), estado_id = COALESCE(?, estado_id) WHERE id = ?`,
+    [data.nombre ?? null, data.email ?? null, data.telefono ?? null, data.estado_id ?? null, id]
+  );
 
-  await client.execute(query, params);
+  await auditLog('ACTUALIZAR', {
+    user_id: userId,
+    ip_address: ip,
+    user_agent: userAgent,
+    table: 'leads',
+    record_id: id,
+    old_value: oldValue,
+    new_value: { ...oldValue, ...data }
+  });
+
   return { id };
 }
 
-// Función para eliminar un lead
-export async function deleteLead(id: string, userRole: string) {
-  // Verificar permisos
-  if (!['Admin', 'Coach'].includes(userRole)) {
+// ─── DELETE ─────────────────────────────────────────────
+export async function deleteLead(id: string, userId: string, ip?: string, userAgent?: string) {
+  if (!id) throw new Error('El ID del lead es obligatorio.');
+
+  const roleId = await getUserRole(userId);
+  if (roleId === null) throw new Error('Usuario no encontrado.');
+  const permissions = await getPermissionsByRole(roleId);
+  if (!permissions.includes('leads:delete')) {
     throw new Error('No tiene permiso para eliminar leads.');
   }
+  const result = await client.execute('SELECT * FROM leads WHERE id = ?', [id]);
+  if (result.rows.length === 0) {
+    throw new Error('Lead no encontrado.');
+  }
+  const deletedValue = result.rows[0];
 
-  const query = 'DELETE FROM leads WHERE id = ?';
-  const params = [id];
+  await client.execute('DELETE FROM leads WHERE id = ?', [id]);
 
-  await client.execute(query, params);
+  await auditLog('ELIMINAR', {
+    user_id: userId,
+    ip_address: ip,
+    user_agent: userAgent,
+    table: 'leads',
+    record_id: id,
+    old_value: deletedValue
+  });
+
   return { id };
 }

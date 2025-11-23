@@ -1,4 +1,4 @@
-// server/utils/auditLogger.ts
+// app\composables\log\useAuditLog.ts
 import { randomUUID } from 'node:crypto';
 import { writeAuditLog } from './useInsertLog'; // Asegúrate de que esta función exista
 
@@ -18,7 +18,6 @@ export interface AuditLog {
   [key: string]: unknown;
 }
 
-// ✅ Función asíncrona para auditoría persistente
 export const auditLog = async (
   event: string,
   {

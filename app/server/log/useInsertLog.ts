@@ -20,7 +20,7 @@ export async function writeAuditLog({
   ip?: string;
   user_agent?: string;
 }) {
-  const id = crypto.randomUUID(); 
+  const id = crypto.randomUUID(); // o import { randomUUID } from 'node:crypto'
 
   const query = `
     INSERT INTO logs_auditoria (
