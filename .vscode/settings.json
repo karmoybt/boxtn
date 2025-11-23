@@ -1,0 +1,11 @@
+{
+    "nuxt.isNuxtApp": true ,
+    "nuxtr.vueFiles.template.defaultLanguage": "html",
+    "nuxtr.vueFiles.firstTag": "template",
+    "nuxtr.vueFiles.script.type": "setup",
+    "nuxtr.vueFiles.script.defaultLanguage": "ts",
+    "nuxtr.vueFiles.style.addStyleTag": true,
+    "nuxtr.vueFiles.style.alwaysScoped": true,
+    "nuxtr.vueFiles.style.defaultLanguage": "scss",
+    "nuxtr.piniaFiles.defaultTemplate": "options"
+}
