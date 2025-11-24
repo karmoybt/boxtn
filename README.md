@@ -33,13 +33,9 @@
   - **api/**: Composables relacionados con la API.
     - **useAuth.ts**: Lógica de login/logout/registro, manejo de tokens, estado de sesión.
     - **useUsuarios.ts**: Operaciones CRUD de usuarios (crear, listar, actualizar).
-    - **useLeads.ts**: Obtener, crear, actualizar leads; transición entre estados (nuevo, inscrito, etc.).
     - **useClases.ts**: Gestión de clases recurrentes (crear, editar horarios, asignar coach).
     - **useInstancias.ts**: Crear/actualizar instancias, cambiar estado (programada, cancelada, completada).
     - **useReservas.ts**: Reservar, cancelar, mover a lista de espera.
-    - **useAsistencia.ts**: Registrar asistencia a una instancia (con o sin reserva previa).
-    - **useMembresias.ts**: CRUD de membresías y suscripciones.
-    - **usePacks.ts**: Compra y uso de créditos de packs.
   - **utils/**: Utilidades.
     - **dateUtils.ts**: Formateo de fechas/horas (ej. formatDate, isSameDay).
     - **validators.ts**: Validadores con Zod (ej. leadSchema, loginSchema).
@@ -51,13 +47,13 @@
       - **register.post.ts**: Crea usuario + credencial.
       - **password-reset.post.ts**: Genera/valida reseteo de contraseña.
     - **usuarios/**: Endpoints de usuarios.
-    - **leads/**: Endpoints de leads.
+    - **leads/**: Endpoints de leads./Obtener, crear, actualizar leads; transición entre estados (nuevo, inscrito, etc.).
     - **clases/**: Endpoints de clases.
     - **instancias/**: Endpoints de instancias de clase.
     - **reservas/**: Endpoints de reservas.
-    - **asistencia/**: Endpoints de asistencia.
-    - **membresias/**: Endpoints de membresías.
-    - **packs/**: Endpoints de packs.
+    - **asistencia/**: Endpoints de asistencia./Registro manual o automático de asistencia.
+    - **membresias/**: Endpoints de membresías.CRUD de membresías y suscripciones.
+    - **packs/**: Endpoints de packs. Compra y uso de créditos de packs.
   - **db/**: Base de datos.
     - **client.ts**: Cliente de base de datos (ej. better-sqlite3 o drizzle).
     - **migrations/*.sql**: Scripts para aplicar cambios estructurales en DB (versión controlada).

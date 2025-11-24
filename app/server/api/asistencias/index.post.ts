@@ -1,4 +1,4 @@
-import  { createLead }  from '../../services/leads';
+import  { createAsistencia }  from '../../services/asistencia';
 import { getAuthUserId } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
@@ -7,5 +7,5 @@ export default defineEventHandler(async (event) => {
   const ip = event.node.req.headers['x-forwarded-for'] || event.node.req.socket.remoteAddress;
   const userAgent = event.node.req.headers['user-agent'];
 
-  return await createLead(body, userId, ip as string, userAgent);
+  return await createAsistencia(body, userId, ip as string, userAgent);
 });

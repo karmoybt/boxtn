@@ -1,10 +1,15 @@
 import client from '../db/client';
-import { auditLog } from '../log/useAuditLog'; // asumiendo que esto corre en server
+import { auditLog } from '../log/useAuditLog';
 import { assertPermission } from '../utils/assertPermission';
-import { LEAD_PERMISSIONS } from '../constants/permissionsLead';
+ import { LEAD_PERMISSIONS } from '../../constants/permissions';
 
 // ─── TIPOS ───────────────────────────────────────────────
-export type LeadFilters = Partial<Record<'nombre' | 'email' | 'estado_id', string | number>>;
+export type LeadFilters = Partial<{
+  nombre: string;
+  email: string;
+  estado_id: number;
+}>;
+
 export type LeadData = {
   id: string;
   nombre: string;
@@ -12,6 +17,7 @@ export type LeadData = {
   telefono?: string | null;
   estado_id: number;
 };
+
 export type LeadUpdateData = Partial<Omit<LeadData, 'id'>>;
 
 // ─── UTILS ───────────────────────────────────────────────
@@ -22,33 +28,31 @@ async function getLeadById(id: string) {
 
 // ─── READ ───────────────────────────────────────────────
 export async function getLeads(filters: LeadFilters = {}, userId: string) {
-  await assertPermission(userId, 'READ');
+  await assertPermission(userId, LEAD_PERMISSIONS.READ);
 
   const allowedKeys = ['nombre', 'email', 'estado_id'] as const;
-  const safeFilters = {} as Record<string, any>;
-  const values: any[] = [];
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
 
   for (const key of allowedKeys) {
-    if (key in filters && filters[key] !== undefined) {
-      safeFilters[key] = filters[key];
-      values.push(filters[key]);
+    if (filters[key] !== undefined) {
+      conditions.push(`${key} = ?`);
+      params.push(filters[key]!);
     }
   }
 
   let query = 'SELECT * FROM leads';
-  if (Object.keys(safeFilters).length > 0) {
-    const conditions = Object.keys(safeFilters).map(() => '?? = ?').join(' AND ');
-    query += ` WHERE ${conditions}`;
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
   }
 
-  // Nota: Turso/libSQL usa ?? para identificadores seguros
-  const result = await client.execute(query, [...Object.keys(safeFilters), ...values]);
+  const result = await client.execute(query, params);
   return result.rows;
 }
 
 // ─── CREATE ─────────────────────────────────────────────
 export async function createLead(data: LeadData, userId: string, ip?: string, userAgent?: string) {
-  await assertPermission(userId, 'CREATE');
+  await assertPermission(userId, LEAD_PERMISSIONS.CREATE);
 
   if (!data.nombre) throw new Error('El nombre es obligatorio.');
   if (!data.estado_id) throw new Error('El estado es obligatorio.');
@@ -76,18 +80,18 @@ export async function createLead(data: LeadData, userId: string, ip?: string, us
 // ─── UPDATE ─────────────────────────────────────────────
 export async function updateLead(id: string, data: LeadUpdateData, userId: string, ip?: string, userAgent?: string) {
   if (!id) throw new Error('ID obligatorio.');
-  await assertPermission(userId, 'UPDATE');
+  await assertPermission(userId, LEAD_PERMISSIONS.UPDATE);
 
   const oldLead = await getLeadById(id);
   if (!oldLead) throw new Error('Lead no encontrado.');
 
   const fields: string[] = [];
-  const values: any[] = [];
+  const values: (string | number | null)[] = [];
 
   (['nombre', 'email', 'telefono', 'estado_id'] as const).forEach(key => {
     if (key in data) {
-      fields.push(`?? = ?`);
-      values.push(key, data[key] ?? null);
+      fields.push(`${key} = ?`);
+      values.push(data[key] ?? null);
     }
   });
 
@@ -112,7 +116,7 @@ export async function updateLead(id: string, data: LeadUpdateData, userId: strin
 // ─── DELETE ─────────────────────────────────────────────
 export async function deleteLead(id: string, userId: string, ip?: string, userAgent?: string) {
   if (!id) throw new Error('ID obligatorio.');
-  await assertPermission(userId, 'DELETE');
+  await assertPermission(userId, LEAD_PERMISSIONS.DELETE);
 
   const lead = await getLeadById(id);
   if (!lead) throw new Error('Lead no encontrado.');

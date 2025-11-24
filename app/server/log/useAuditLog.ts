@@ -1,72 +1,30 @@
-// app\composables\log\useAuditLog.ts
-import { randomUUID } from 'node:crypto';
-import { writeAuditLog } from './useInsertLog'; // Asegúrate de que esta función exista
+import client from '../db/client';
 
-let currentTraceId: string | null = null;
-
-export const setTraceId = (id: string) => {
-  currentTraceId = id;
-};
-
-export interface AuditLog {
-  timestamp: string;
-  level: 'info' | 'warn' | 'error';
-  event: string;
-  trace_id: string;
-  user_id?: string;
-  ip_address?: string;
-  [key: string]: unknown;
-}
-
-export const auditLog = async (
-  event: string,
-  {
-    user_id,
-    ip_address,
-    table,
-    record_id,
-    old_value,
-    new_value,
-    user_agent,
-    ...rest
-  }: Partial<AuditLog> & {
+export async function auditLog(
+  action: 'CREAR' | 'ACTUALIZAR' | 'ELIMINAR',
+  data: {
+    user_id: string;
+    ip_address?: string;
+    user_agent?: string;
     table: string;
     record_id: string;
     old_value?: unknown;
     new_value?: unknown;
-    user_agent?: string;
   }
-): Promise<{ trace_id: string }> => {
-  const trace_id = currentTraceId || randomUUID();
-
-  // Guardar en la tabla de auditoría
-  await writeAuditLog({
-    usuario_id: user_id,
-    accion: event,
-    tabla: table,
-    registro_id: record_id,
-    valor_anterior: old_value ? JSON.stringify(old_value) : undefined,
-    valor_nuevo: new_value ? JSON.stringify(new_value) : undefined,
-    ip: ip_address,
-    user_agent,
-  });
-
-  // Log en desarrollo
-  if (process.env.NODE_ENV === 'development') {
-    console.log(
-      JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        event,
-        trace_id,
-        user_id,
-        ip_address,
-        table,
-        record_id,
-        ...rest,
-      }, null, 2)
-    );
-  }
-
-  return { trace_id };
-};
+): Promise<void> {
+  await client.execute(
+    `INSERT INTO audit_logs (
+      action, user_id, ip_address, user_agent, table_name, record_id, old_value, new_value, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    [
+      action,
+      data.user_id,
+      data.ip_address || null,
+      data.user_agent || null,
+      data.table,
+      data.record_id,
+      data.old_value ? JSON.stringify(data.old_value) : null,
+      data.new_value ? JSON.stringify(data.new_value) : null
+    ]
+  );
+}

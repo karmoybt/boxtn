@@ -1,43 +1,29 @@
-// server/db/audit.ts
-import client from '~/server/db/client';
+import client from '../db/client';
 
-export async function writeAuditLog({
-  usuario_id,
-  accion,
-  tabla,
-  registro_id,
-  valor_anterior,
-  valor_nuevo,
-  ip,
-  user_agent
-}: {
-  usuario_id?: string;
-  accion: string;
-  tabla: string;
-  registro_id: string;
-  valor_anterior?: string;
-  valor_nuevo?: string;
-  ip?: string;
-  user_agent?: string;
-}) {
-  const id = crypto.randomUUID(); // o import { randomUUID } from 'node:crypto'
-
-  const query = `
-    INSERT INTO logs_auditoria (
-      id, usuario_id, accion, tabla, registro_id,
-      valor_anterior, valor_nuevo, ip, user_agent
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  await client.execute(query, [
-    id,
-    usuario_id ?? null,
-    accion,
-    tabla,
-    registro_id,
-    valor_anterior ? JSON.stringify(valor_anterior) : null,
-    valor_nuevo ? JSON.stringify(valor_nuevo) : null,
-    ip ?? null,
-    user_agent ?? null
-  ]);
+export async function auditLog(
+  action: 'CREAR' | 'ACTUALIZAR' | 'ELIMINAR',
+  data: {
+    user_id: string;
+    ip_address?: string;
+    user_agent?: string;
+    table: string;
+    record_id: string;
+    old_value?: unknown;
+    new_value?: unknown;
+  }
+) {
+  await client.execute(
+    `INSERT INTO audit_logs (action, user_id, ip_address, user_agent, table_name, record_id, old_value, new_value, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    [
+      action,
+      data.user_id,
+      data.ip_address || null,
+      data.user_agent || null,
+      data.table,
+      data.record_id,
+      data.old_value ? JSON.stringify(data.old_value) : null,
+      data.new_value ? JSON.stringify(data.new_value) : null
+    ]
+  );
 }

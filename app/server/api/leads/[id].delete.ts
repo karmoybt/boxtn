@@ -1,18 +1,11 @@
-import db from '~/server/db/client';
+import { deleteLead } from '../../services/leads';
+import { getAuthUserId } from '../../utils/auth';
 
 export default defineEventHandler(async (event) => {
-  const id = event.context.params?.id;
-  if (!id) {
-    throw createError({ status: 400, message: 'ID is required' });
-  }
+  const userId = await getAuthUserId(event);
+  const id = getRouterParam(event, 'id');
+  const ip = event.node.req.headers['x-forwarded-for'] || event.node.req.socket.remoteAddress;
+  const userAgent = event.node.req.headers['user-agent'];
 
-  await db.execute({
-    sql: `
-      DELETE FROM leads
-      WHERE id = ?
-    `,
-    args: [id]
-  });
-
-  return { ok: true };
+  return await deleteLead(id!, userId, ip as string, userAgent);
 });
