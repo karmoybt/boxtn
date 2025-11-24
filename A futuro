@@ -1,0 +1,33 @@
+A FUTUTRO 
+WOD Management:
+
+wods - Historial de entrenamientos diarios
+movimientos - Base de movimientos CrossFit (peso, repeticiones, tiempo)
+registros_wod - Rendimiento de usuarios en cada WOD
+Tracking de Rendimiento:
+
+maximos - PRs personales (1RM, etc.)
+estadisticas - Progresos, asistencias, WODs completados
+metas - Objetivos personales de usuarios
+
+Clases y Entrenamiento:
+
+nivel_clase - Niveles de dificultad (Fundamentals, RX, etc.)
+asignaciones_coach - Horarios y disponibilidad coaches
+evaluaciones - Skills assessments para movimientos
+notas_usuario - Comentarios médicos/restricciones
+Seguimiento Avanzado:
+
+cargas_entrenamiento - Periodización, volumen, intensidad
+injuries - Lesiones y estado físico
+body_composition - Mediciones corporales
+comentarios_coach - Feedback individual
+Gestión Interna:
+
+inventario - Material del box (kettlebells, etc.)
+mantenimiento - Estado del equipamiento
+encuestas - Feedback sobre clases/movimientos
+Notificaciones:
+
+notificaciones - Recordatorios, anuncios, cambios
+preferencias_notif - Configuración por usuario
