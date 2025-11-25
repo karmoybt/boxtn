@@ -31,3 +31,93 @@ Notificaciones:
 
 notificaciones - Recordatorios, anuncios, cambios
 preferencias_notif - Configuración por usuario
+
+
+Perfecto, tienes una base sólida. Lo que necesitas ahora es **alinear tu lógica de permisos en TypeScript con tu modelo de base de datos**, sin depender de constantes en el código para la lógica de autorización. Aquí va el **plan estratégico** para migrar tu sistema de permisos a base de datos, manteniendo flexibilidad, mantenibilidad y escalabilidad:
+
+---
+
+### 🔑 **Objetivo Central**
+**Reemplazar las constantes de permisos en `permissions.ts` por una resolución dinámica desde la base de datos**, sin perder seguridad, claridad ni rendimiento.
+
+---
+
+### ✅ **Paso 1: Normaliza los permisos en BBDD (ya casi lo tienes)**
+Actualmente defines permisos como strings descriptivos (`'crear_lead'`, `'reservar'`, etc.).  
+**Mejora:** Alinéalos **exactamente** a los nombres que usas en `permissions.ts`, como `'leads:create'`.
+
+➡️ **Acción:** Actualiza la tabla `permisos` con los nombres **en formato canonizado**:
+```sql
+UPDATE permisos SET nombre = 'leads:create' WHERE nombre = 'crear_lead';
+-- ... y así con todos
+```
+Esto asegura que **el string del permiso sea el mismo en BBDD y en backend** → evitas bugs por desincronización.
+
+---
+
+### ✅ **Paso 2: Carga los permisos del rol una sola vez por sesión (caching)**
+No querrás hacer una query por cada llamada a `assertPermission`.
+
+➡️ **Acción:** Al iniciar sesión o resolver el usuario, carga **todos los permisos de su rol** desde:
+```sql
+SELECT p.nombre
+FROM roles_permisos rp
+JOIN permisos p ON rp.permiso_id = p.id
+WHERE rp.rol_id = ?;
+```
+Guarda ese array en contexto (ej: `req.user.permissions` o en tu objeto de sesión).  
+Luego `assertPermission(userId, 'leads:create')` se convierte en una **comparación en memoria**, no en BBDD.
+
+> 💡 Esto es clave para rendimiento y evitar llamadas repetidas.
+
+---
+
+### ✅ **Paso 3: Reemplaza las constantes en TS por validación contra el array cargado**
+Elimina (o convierte en solo tipo) las constantes como `LEAD_PERMISSIONS`.  
+Tu función `assertPermission` ya no necesita saber qué permisos existen: solo verifica si el string dado está en el array del rol.
+
+➡️ **Resultado:** Ya no necesitas mantener sincronización manual entre TS y BBDD más que en **los nombres de los permisos** (que ahora son los mismos).
+
+---
+
+### ✅ **Paso 4: Gestiona asignaciones de permisos vía interfaz o scripts, no hardcode**
+Tienes inserts manuales en SQL. Para mantenimiento a largo plazo:
+
+- Crea un **panel de administración simple** (solo para admin) que permita:
+  - Ver roles
+  - Asignar/desasignar permisos a roles
+- O, al menos, **un script de inicialización** en TS/SQL que se ejecute al migrar, **con los mismos nombres que usas en el frontend/backend**.
+
+Esto evita que un typo en SQL rompa la app.
+
+---
+
+### ✅ **Paso 5: Asegura consistencia con migraciones y tests**
+Cada vez que agregues un nuevo permiso:
+1. Agregas el string en BBDD (`INSERT INTO permisos`)
+2. Asignas a roles según reglas de negocio
+3. **No tocas** `permissions.ts` (o lo usas solo como referencia de tipos)
+4. **Testea** que `assertPermission` funciona para cada rol
+
+---
+
+### 🚫 **Errores comunes que debes evitar**
+- **Hardcodear IDs de roles o permisos** en la app → siempre usa nombres (`'admin'`, `'leads:create'`).
+- **No cachear permisos por sesión** → matarás la BBDD con queries redundantes.
+- **Desalinear nombres entre TS y BBDD** → la fuente de bugs más silenciosos.
+- **Dar permisos a usuarios individuales** (a menos que sea necesario) → mantén la lógica en **roles**, no en usuarios.
+
+---
+
+### 🔮 **Bonus: Escalabilidad futura**
+Si algún día necesitas permisos por usuario (no solo por rol), podrías añadir una tabla `usuarios_permisos` que **se sume** a los del rol (sin reemplazarlos). Tu `assertPermission` seguiría funcionando igual: solo cambia cómo armas el array de permisos del usuario.
+
+---
+
+### ✅ **Resumen del flujo ideal**
+1. Usuario inicia sesión → obtienes su `rol_id`.
+2. Cargas todos los `permisos.nombre` asociados a ese rol.
+3. Guardas esos permisos en contexto de usuario.
+4. En cada endpoint, `assertPermission(userId, 'recurso:accion')` verifica si ese string está en el array.
+5. Todo el control de acceso vive en BBDD → modificable sin deploy.
+

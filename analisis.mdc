@@ -5,7 +5,7 @@ El proyecto consiste en un sistema de gestión de relaciones con los clientes (C
 
 #### Análisis de Funcionalidades y Requerimientos
 
-##### 1. Leads
+##### 1. Leads 
 - **Definición**: Un lead es un potencial cliente que ha mostrado interés en el box de crossfit. Puede ser capturado a través de formularios de contacto, eventos o referencias.
 - **Lógica**: Los leads deben poder ser creados, actualizados y tener un estado que los categorice en "nuevo", "pendiente", "inscrito" o "descartado".
 - **Restricciones**:
