@@ -1,148 +1,98 @@
-import client from '../db/client';
-import { auditLog } from '../log/useAuditLog';
+// app/server/services/membresia.ts
+import type { MembresiaData, MembresiaFilters } from '../types/membresia';
+import type { IMembresiaRepository } from '../repositories/IMembresiaRepository';
 import { assertPermission } from '../utils/assertPermission';
+import { auditLog } from '../log/useAuditLog';
 import { MEMBRESIA_PERMISSIONS } from '../../constants/permissions';
 
-// ─── TIPOS ───────────────────────────────────────────────
-export type MembresiaFilters = Partial<{
-  nombre: string;
-}>;
+export function makeMembresiaService(repo: IMembresiaRepository) {
+  return {
+    async getMembresias(filters: MembresiaFilters = {}, userId: string) {
+      await assertPermission(userId, MEMBRESIA_PERMISSIONS.READ);
+      return await repo.findBy(filters);
+    },
 
-export type MembresiaData = {
-  id: string;
-  nombre: string;
-  duracion_dias: number;
-};
+    async createMembresia(
+      data: MembresiaData,
+      userId: string,
+      ip?: string,
+      userAgent?: string
+    ) {
+      await assertPermission(userId, MEMBRESIA_PERMISSIONS.CREATE);
 
-export type MembresiaUpdateData = Partial<Pick<MembresiaData, 'nombre' | 'duracion_dias'>>;
+      if (!data.nombre) throw new Error('El nombre es obligatorio.');
+      if (!data.duracion_dias || data.duracion_dias <= 0) {
+        throw new Error('duracion_dias debe ser un número positivo.');
+      }
 
-// ─── UTILS ───────────────────────────────────────────────
-async function getMembresiaById(id: string) {
-  const res = await client.execute('SELECT * FROM membresias WHERE id = ?', [id]);
-  return res.rows[0] || null;
-}
+      const existing = await repo.findById(data.id);
+      if (existing) throw new Error('Ya existe una membresía con este ID.');
 
-// ─── READ ───────────────────────────────────────────────
-export async function getMembresias(filters: MembresiaFilters = {}, userId: string) {
-  await assertPermission(userId, MEMBRESIA_PERMISSIONS.READ);
+      await repo.create(data);
 
-  const conditions: string[] = [];
-  const params: string[] = [];
+      await auditLog('CREAR', {
+        user_id: userId,
+        ip_address: ip,
+        user_agent: userAgent,
+        table: 'membresias',
+        record_id: data.id,
+        new_value: data
+      });
 
-  if (filters.nombre) {
-    conditions.push('nombre = ?');
-    params.push(filters.nombre);
-  }
+      return { id: data.id };
+    },
 
-  let query = 'SELECT * FROM membresias';
-  if (conditions.length > 0) {
-    query += ' WHERE ' + conditions.join(' AND ');
-  }
+    async updateMembresia(
+      id: string,
+      data: Partial<MembresiaData>,
+      userId: string,
+      ip?: string,
+      userAgent?: string
+    ) {
+      if (!id) throw new Error('ID obligatorio.');
+      await assertPermission(userId, MEMBRESIA_PERMISSIONS.UPDATE);
 
-  const result = await client.execute(query, params);
-  return result.rows;
-}
+      if (data.duracion_dias !== undefined && data.duracion_dias <= 0) {
+        throw new Error('duracion_dias debe ser positivo.');
+      }
 
-// ─── CREATE ─────────────────────────────────────────────
-export async function createMembresia(
-  data: MembresiaData, 
-  userId: string,
-  ip?: string,
-  userAgent?: string
-) {
-  await assertPermission(userId, MEMBRESIA_PERMISSIONS.CREATE);
+      const oldMembresia = await repo.findById(id);
+      if (!oldMembresia) throw new Error('Membresía no encontrada.');
 
-  if (!data.nombre) throw new Error('El nombre es obligatorio.');
-  if (!data.duracion_dias || data.duracion_dias <= 0) {
-    throw new Error('duracion_dias debe ser un número positivo.');
-  }
+      await repo.update(id, data);
 
-  const existing = await getMembresiaById(data.id);
-  if (existing) throw new Error('Ya existe una membresía con este ID.');
+      await auditLog('ACTUALIZAR', {
+        user_id: userId,
+        ip_address: ip,
+        user_agent: userAgent,
+        table: 'membresias',
+        record_id: id,
+        old_value: oldMembresia,
+        new_value: { ...oldMembresia, ...data }
+      });
 
-  await client.execute(
-    `INSERT INTO membresias (id, nombre, duracion_dias) VALUES (?, ?, ?)`,
-    [data.id, data.nombre, data.duracion_dias]
-  );
+      return { id };
+    },
 
-  await auditLog('CREAR', {
-    user_id: userId,
-    ip_address: ip,
-    user_agent: userAgent,
-    table: 'membresias',
-    record_id: data.id,
-    new_value: data
-  });
+    async deleteMembresia(id: string, userId: string, ip?: string, userAgent?: string) {
+      if (!id) throw new Error('ID obligatorio.');
+      await assertPermission(userId, MEMBRESIA_PERMISSIONS.DELETE);
 
-  return { id: data.id };
-}
+      const membresia = await repo.findById(id);
+      if (!membresia) throw new Error('Membresía no encontrada.');
 
-// ─── UPDATE ─────────────────────────────────────────────
-export async function updateMembresia(
-  id: string,
-  data: MembresiaUpdateData, 
-  userId: string,
-  ip?: string,
-  userAgent?: string
-) {
-  if (!id) throw new Error('ID obligatorio.');
-  await assertPermission(userId, MEMBRESIA_PERMISSIONS.UPDATE);
+      await repo.deleteById(id);
 
-  if (data.duracion_dias !== undefined && data.duracion_dias <= 0) {
-    throw new Error('duracion_dias debe ser positivo.');
-  }
+      await auditLog('ELIMINAR', {
+        user_id: userId,
+        ip_address: ip,
+        user_agent: userAgent,
+        table: 'membresias',
+        record_id: id,
+        old_value: membresia
+      });
 
-  const oldMembresia = await getMembresiaById(id);
-  if (!oldMembresia) throw new Error('Membresía no encontrada.');
-
-  const fields: string[] = [];
-  const values: (string | number | null)[] = [];
-
-  if (data.nombre !== undefined) {
-    fields.push('nombre = ?');
-    values.push(data.nombre);
-  }
-  if (data.duracion_dias !== undefined) {
-    fields.push('duracion_dias = ?');
-    values.push(data.duracion_dias);
-  }
-
-  if (fields.length === 0) return { id };
-
-  const query = `UPDATE membresias SET ${fields.join(', ')} WHERE id = ?`;
-  await client.execute(query, [...values, id]);
-
-  await auditLog('ACTUALIZAR', {
-    user_id: userId,
-    ip_address: ip,
-    user_agent: userAgent,
-    table: 'membresias',
-    record_id: id,
-    old_value: oldMembresia,
-    new_value: { ...oldMembresia, ...data }
-  });
-
-  return { id };
-}
-
-// ─── DELETE ─────────────────────────────────────────────
-export async function deleteMembresia(id: string, userId: string, ip?: string, userAgent?: string) {
-  if (!id) throw new Error('ID obligatorio.');
-  await assertPermission(userId, MEMBRESIA_PERMISSIONS.DELETE);
-
-  const membresia = await getMembresiaById(id);
-  if (!membresia) throw new Error('Membresía no encontrada.');
-
-  await client.execute('DELETE FROM membresias WHERE id = ?', [id]);
-
-  await auditLog('ELIMINAR', {
-    user_id: userId,
-    ip_address: ip,
-    user_agent: userAgent,
-    table: 'membresias',
-    record_id: id,
-    old_value: membresia
-  });
-
-  return { id };
+      return { id };
+    },
+  };
 }
