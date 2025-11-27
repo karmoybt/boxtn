@@ -2,7 +2,7 @@
 
 import type { PackData, PackFilters } from '../types/packs';
 import type { IPackRepository } from '../repositories/IPackRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { PACK_PERMISSIONS } from '../../constants/permissions';
 

@@ -2,7 +2,7 @@
 
 import type { MembresiaData, MembresiaFilters } from '../types/membresia';
 import type { IMembresiaRepository } from '../repositories/IMembresiaRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { MEMBRESIA_PERMISSIONS } from '../../constants/permissions';
 

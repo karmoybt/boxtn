@@ -1,7 +1,7 @@
 // clasesInstancia.ts
 import type { InstanciaClaseData, InstanciaClaseFilters } from '../types/InstanciaClase';
 import type { IInstanciaClaseRepository } from '../repositories/IInstanciaClaseRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { INSTANCIA_CLASE_PERMISSIONS } from '../../constants/permissions';
 import { randomUUID } from 'node:crypto';

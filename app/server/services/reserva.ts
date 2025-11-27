@@ -2,7 +2,7 @@
 
 import type { ReservaCreateData, ReservaFilters, ReservaUpdateData } from '../types/reserva';
 import type { IReservaRepository } from '../repositories/IReservaRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { RESERVA_PERMISSIONS } from '../../constants/permissions';
 

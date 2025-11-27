@@ -1,49 +1,52 @@
-// ⚠️ GENERADO AUTOMÁTICAMENTE — no editar manualmente
+// ⚠️ GENERADO AUTOMÁTICAMENTE — no editar
 // Ejecuta: npm run generate:registry
 
 import { AsistenciaService } from './asistencia'
-import { InstanciaClaseService } from './clasesInstancia'
-import { ClaseRecurrenteService } from './clasesRecurrentes'
-import { LeadService } from './leads'
+import { SqliteAsistenciaRepository } from '../repositories/impl/SqliteAsistenciaRepository'
+import { ClaseRecurrenteService } from './claseRecurrente'
+import { SqliteClaseRecurrenteRepository } from '../repositories/impl/SqliteClaseRecurrenteRepository'
+import { InstanciaClaseService } from './instanciaClase'
+import { SqliteInstanciaClaseRepository } from '../repositories/impl/SqliteInstanciaClaseRepository'
+import { LeadService } from './lead'
+import { SqliteLeadRepository } from '../repositories/impl/SqliteLeadRepository'
 import { MembresiaService } from './membresia'
+import { SqliteMembresiaRepository } from '../repositories/impl/SqliteMembresiaRepository'
 import { PackService } from './pack'
-import { ReservaService } from './reservas'
-import type { IAsistenciaRepository } from '../repositories/IAsistenciaRepository'
-import type { IInstanciaClaseRepository } from '../repositories/IInstanciaClaseRepository'
-import type { IClaseRecurrenteRepository } from '../repositories/IClasesRecurrenteRepository'
-import type { ILeadRepository } from '../repositories/ILeadRepository'
-import type { IMembresiaRepository } from '../repositories/IMembresiaRepository'
-import type { IPackRepository } from '../repositories/IPackRepository'
-import type { IReservaRepository } from '../repositories/IReservaRepository'
-
-export interface CrudService<T> {
-  findById(id: string): Promise<T | null>
-  findMany(query: Record<string, unknown>): Promise<T[]>
-  create(data: Record<string, unknown> | T): Promise<T>
-  update(id: string, data: Record<string, unknown> | T): Promise<T>
-  delete(id: string): Promise<boolean>
-}
+import { SqlitePackRepository } from '../repositories/impl/SqlitePackRepository'
+import { ReservaService } from './reserva'
+import { SqliteReservaRepository } from '../repositories/impl/SqliteReservaRepository'
 
 export const serviceRegistry = {
-  'asistencia': { service: AsistenciaService },
-  'clases-instancia': { service: InstanciaClaseService },
-  'clases-recurrentes': { service: ClaseRecurrenteService },
-  'leads': { service: LeadService },
-  'membresia': { service: MembresiaService },
-  'pack': { service: PackService },
-  'reservas': { service: ReservaService }
+  'asistencia': {
+    service: AsistenciaService,
+    repo: SqliteAsistenciaRepository
+  },
+  'clase-recurrente': {
+    service: ClaseRecurrenteService,
+    repo: SqliteClaseRecurrenteRepository
+  },
+  'instancia-clase': {
+    service: InstanciaClaseService,
+    repo: SqliteInstanciaClaseRepository
+  },
+  'lead': {
+    service: LeadService,
+    repo: SqliteLeadRepository
+  },
+  'membresia': {
+    service: MembresiaService,
+    repo: SqliteMembresiaRepository
+  },
+  'pack': {
+    service: PackService,
+    repo: SqlitePackRepository
+  },
+  'reserva': {
+    service: ReservaService,
+    repo: SqliteReservaRepository
+  }
 } as const
-
-type _RepoTypeMap = {
-  'asistencia': IAsistenciaRepository,
-  'clases-instancia': IInstanciaClaseRepository,
-  'clases-recurrentes': IClaseRecurrenteRepository,
-  'leads': ILeadRepository,
-  'membresia': IMembresiaRepository,
-  'pack': IPackRepository,
-  'reservas': IReservaRepository
-}
 
 export type EntityName = keyof typeof serviceRegistry
 export type ServiceFor<E extends EntityName> = InstanceType<typeof serviceRegistry[E]['service']>
-export type RepoFor<E extends EntityName> = _RepoTypeMap[E]
+export type RepoFor<E extends EntityName> = InstanceType<typeof serviceRegistry[E]['repo']>

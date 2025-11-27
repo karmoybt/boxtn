@@ -2,7 +2,7 @@
 
 import type { ClaseRecurrenteData, ClaseRecurrenteFilters } from '../types/claseRecurrente';
 import type { IClaseRecurrenteRepository } from '../repositories/IClasesRecurrenteRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { CLASE_RECURRENTE_PERMISSIONS } from '../../constants/permissions';
 

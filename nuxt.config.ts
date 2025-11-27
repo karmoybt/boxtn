@@ -11,6 +11,9 @@ export default defineNuxtConfig({
   nitro: {
     storage: {
       data: { driver: 'fs', base: './data' }
+    }, 
+    routeRules: {
+      '/api/**': { appMiddleware: 'auth' }
     }
   }
 

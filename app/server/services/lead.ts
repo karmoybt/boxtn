@@ -2,7 +2,7 @@
 
 import type { LeadData, LeadFilters } from '../types/lead';
 import type { ILeadRepository } from '../repositories/ILeadRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { LEAD_PERMISSIONS } from '../../constants/permissions';
 

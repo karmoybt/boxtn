@@ -1,7 +1,7 @@
 // asistencia.ts
 import type { AsistenciaData, AsistenciaFilters } from '../types/asistencia';
 import type { IAsistenciaRepository } from '../repositories/IAsistenciaRepository';
-import { assertPermission } from '../utils/assertPermission';
+import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { ASISTENCIA_PERMISSIONS } from '../../constants/permissions';
 
