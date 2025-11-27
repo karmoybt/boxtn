@@ -1,86 +1,88 @@
+// app/server/services/leads.ts
+
 import type { LeadData, LeadFilters } from '../types/lead';
 import type { ILeadRepository } from '../repositories/ILeadRepository';
 import { assertPermission } from '../utils/assertPermission';
 import { auditLog } from '../log/useAuditLog';
 import { LEAD_PERMISSIONS } from '../../constants/permissions';
 
-export function makeLeadService(repo: ILeadRepository) {
-  return {
-    async getLeads(filters: LeadFilters = {}, userId: string) {
-      await assertPermission(userId, LEAD_PERMISSIONS.READ);
-      return await repo.findBy(filters);
-    },
+export class LeadService {
+  constructor(private repo: ILeadRepository) {}
 
-    async createLead(data: LeadData, userId: string, ip?: string, userAgent?: string) {
-      await assertPermission(userId, LEAD_PERMISSIONS.CREATE);
+  async getLeads(filters: LeadFilters = {}, userId: string) {
+    await assertPermission(userId, LEAD_PERMISSIONS.READ);
+    return await this.repo.findBy(filters);
+  }
 
-      if (!data.nombre) throw new Error('El nombre es obligatorio.');
-      if (!data.estado_id) throw new Error('El estado es obligatorio.');
+  async createLead(data: LeadData, userId: string, ip?: string, userAgent?: string) {
+    await assertPermission(userId, LEAD_PERMISSIONS.CREATE);
 
-      const existing = await repo.findById(data.id);
-      if (existing) throw new Error('Ya existe un lead con este ID.');
+    if (!data.nombre) throw new Error('El nombre es obligatorio.');
+    if (!data.estado_id) throw new Error('El estado es obligatorio.');
 
-      await repo.create(data);
+    const existing = await this.repo.findById(data.id);
+    if (existing) throw new Error('Ya existe un lead con este ID.');
 
-      await auditLog('CREAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'leads',
-        record_id: data.id,
-        new_value: data
-      });
+    await this.repo.create(data);
 
-      return { id: data.id };
-    },
+    await auditLog('CREAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'leads',
+      record_id: data.id,
+      new_value: data
+    });
 
-    async updateLead(
-      id: string,
-      data: Partial<LeadData>,
-      userId: string,
-      ip?: string,
-      userAgent?: string
-    ) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, LEAD_PERMISSIONS.UPDATE);
+    return { id: data.id };
+  }
 
-      const oldLead = await repo.findById(id);
-      if (!oldLead) throw new Error('Lead no encontrado.');
+  async updateLead(
+    id: string,
+    data: Partial<LeadData>,
+    userId: string,
+    ip?: string,
+    userAgent?: string
+  ) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, LEAD_PERMISSIONS.UPDATE);
 
-      await repo.update(id, data);
+    const oldLead = await this.repo.findById(id);
+    if (!oldLead) throw new Error('Lead no encontrado.');
 
-      await auditLog('ACTUALIZAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'leads',
-        record_id: id,
-        old_value: oldLead,
-        new_value: { ...oldLead, ...data }
-      });
+    await this.repo.update(id, data);
 
-      return { id };
-    },
+    await auditLog('ACTUALIZAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'leads',
+      record_id: id,
+      old_value: oldLead,
+      new_value: { ...oldLead, ...data }
+    });
 
-    async deleteLead(id: string, userId: string, ip?: string, userAgent?: string) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, LEAD_PERMISSIONS.DELETE);
+    return { id };
+  }
 
-      const lead = await repo.findById(id);
-      if (!lead) throw new Error('Lead no encontrado.');
+  async deleteLead(id: string, userId: string, ip?: string, userAgent?: string) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, LEAD_PERMISSIONS.DELETE);
 
-      await repo.delete(id);
+    const lead = await this.repo.findById(id);
+    if (!lead) throw new Error('Lead no encontrado.');
 
-      await auditLog('ELIMINAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'leads',
-        record_id: id,
-        old_value: lead
-      });
+    await this.repo.delete(id);
 
-      return { id };
-    },
-  };
+    await auditLog('ELIMINAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'leads',
+      record_id: id,
+      old_value: lead
+    });
+
+    return { id };
+  }
 }

@@ -1,112 +1,114 @@
+// app/server/services/clasesRecurrentes.ts
+
 import type { ClaseRecurrenteData, ClaseRecurrenteFilters } from '../types/claseRecurrente';
-import type { IClaseRecurrenteRepository } from '../repositories/IClaseRecurrenteRepository';
+import type { IClaseRecurrenteRepository } from '../repositories/IClasesRecurrenteRepository';
 import { assertPermission } from '../utils/assertPermission';
 import { auditLog } from '../log/useAuditLog';
 import { CLASE_RECURRENTE_PERMISSIONS } from '../../constants/permissions';
 
-export function makeClaseRecurrenteService(repo: IClaseRecurrenteRepository) {
-  return {
-    async getClasesRecurrentes(filters: ClaseRecurrenteFilters = {}, userId: string) {
-      await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.READ);
-      return await repo.findBy(filters);
-    },
+export class ClaseRecurrenteService {
+  constructor(private repo: IClaseRecurrenteRepository) {}
 
-    async createClaseRecurrente(
-      data: ClaseRecurrenteData,
-      userId: string,
-      ip?: string,
-      userAgent?: string
-    ) {
-      await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.CREATE);
+  async getClasesRecurrentes(filters: ClaseRecurrenteFilters = {}, userId: string) {
+    await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.READ);
+    return await this.repo.findBy(filters);
+  }
 
-      if (!data.nombre) throw new Error('El nombre es obligatorio.');
-      if (typeof data.dia_semana !== 'number' || data.dia_semana < 0 || data.dia_semana > 6) {
-        throw new Error('dia_semana debe ser un número entre 0 y 6.');
-      }
-      if (!/^\d{2}:\d{2}$/.test(data.hora_inicio)) {
-        throw new Error('hora_inicio debe tener formato HH:mm.');
-      }
-      if (!data.duracion_minutos || data.duracion_minutos <= 0) {
-        throw new Error('duracion_minutos debe ser un número positivo.');
-      }
+  async createClaseRecurrente(
+    data: ClaseRecurrenteData,
+    userId: string,
+    ip?: string,
+    userAgent?: string
+  ) {
+    await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.CREATE);
 
-      const existing = await repo.findById(data.id);
-      if (existing) throw new Error('Ya existe una clase recurrente con este ID.');
+    if (!data.nombre) throw new Error('El nombre es obligatorio.');
+    if (typeof data.dia_semana !== 'number' || data.dia_semana < 0 || data.dia_semana > 6) {
+      throw new Error('dia_semana debe ser un número entre 0 y 6.');
+    }
+    if (!/^\d{2}:\d{2}$/.test(data.hora_inicio)) {
+      throw new Error('hora_inicio debe tener formato HH:mm.');
+    }
+    if (!data.duracion_minutos || data.duracion_minutos <= 0) {
+      throw new Error('duracion_minutos debe ser un número positivo.');
+    }
 
-      const capacidad_max = data.capacidad_max ?? 12;
-      const coach_id = data.coach_id ?? null;
+    const existing = await this.repo.findById(data.id);
+    if (existing) throw new Error('Ya existe una clase recurrente con este ID.');
 
-      await repo.create({ ...data, capacidad_max, coach_id });
+    const capacidad_max = data.capacidad_max ?? 12;
+    const coach_id = data.coach_id ?? null;
 
-      await auditLog('CREAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'clases_recurrentes',
-        record_id: data.id,
-        new_value: data
-      });
+    await this.repo.create({ ...data, capacidad_max, coach_id });
 
-      return { id: data.id };
-    },
+    await auditLog('CREAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'clases_recurrentes',
+      record_id: data.id,
+      new_value: data
+    });
 
-    async updateClaseRecurrente(
-      id: string,
-      data: Partial<ClaseRecurrenteData>,
-      userId: string,
-      ip?: string,
-      userAgent?: string
-    ) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.UPDATE);
+    return { id: data.id };
+  }
 
-      const oldClase = await repo.findById(id);
-      if (!oldClase) throw new Error('Clase recurrente no encontrada.');
+  async updateClaseRecurrente(
+    id: string,
+    data: Partial<ClaseRecurrenteData>,
+    userId: string,
+    ip?: string,
+    userAgent?: string
+  ) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.UPDATE);
 
-      if (data.dia_semana !== undefined && (data.dia_semana < 0 || data.dia_semana > 6)) {
-        throw new Error('dia_semana debe estar entre 0 y 6.');
-      }
-      if (data.hora_inicio !== undefined && !/^\d{2}:\d{2}$/.test(data.hora_inicio)) {
-        throw new Error('hora_inicio debe tener formato HH:mm.');
-      }
-      if (data.duracion_minutos !== undefined && data.duracion_minutos <= 0) {
-        throw new Error('duracion_minutos debe ser positivo.');
-      }
+    const oldClase = await this.repo.findById(id);
+    if (!oldClase) throw new Error('Clase recurrente no encontrada.');
 
-      await repo.update(id, data);
+    if (data.dia_semana !== undefined && (data.dia_semana < 0 || data.dia_semana > 6)) {
+      throw new Error('dia_semana debe estar entre 0 y 6.');
+    }
+    if (data.hora_inicio !== undefined && !/^\d{2}:\d{2}$/.test(data.hora_inicio)) {
+      throw new Error('hora_inicio debe tener formato HH:mm.');
+    }
+    if (data.duracion_minutos !== undefined && data.duracion_minutos <= 0) {
+      throw new Error('duracion_minutos debe ser positivo.');
+    }
 
-      await auditLog('ACTUALIZAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'clases_recurrentes',
-        record_id: id,
-        old_value: oldClase,
-        new_value: { ...oldClase, ...data }
-      });
+    await this.repo.update(id, data);
 
-      return { id };
-    },
+    await auditLog('ACTUALIZAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'clases_recurrentes',
+      record_id: id,
+      old_value: oldClase,
+      new_value: { ...oldClase, ...data }
+    });
 
-    async deleteClaseRecurrente(id: string, userId: string, ip?: string, userAgent?: string) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.DELETE);
+    return { id };
+  }
 
-      const clase = await repo.findById(id);
-      if (!clase) throw new Error('Clase recurrente no encontrada.');
+  async deleteClaseRecurrente(id: string, userId: string, ip?: string, userAgent?: string) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.DELETE);
 
-      await repo.delete(id);
+    const clase = await this.repo.findById(id);
+    if (!clase) throw new Error('Clase recurrente no encontrada.');
 
-      await auditLog('ELIMINAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'clases_recurrentes',
-        record_id: id,
-        old_value: clase
-      });
+    await this.repo.delete(id);
 
-      return { id };
-    },
-  };
+    await auditLog('ELIMINAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'clases_recurrentes',
+      record_id: id,
+      old_value: clase
+    });
+
+    return { id };
+  }
 }

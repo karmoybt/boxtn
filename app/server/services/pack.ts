@@ -1,92 +1,94 @@
+// app/server/services/packs.ts
+
 import type { PackData, PackFilters } from '../types/packs';
 import type { IPackRepository } from '../repositories/IPackRepository';
 import { assertPermission } from '../utils/assertPermission';
 import { auditLog } from '../log/useAuditLog';
 import { PACK_PERMISSIONS } from '../../constants/permissions';
 
-export function makePackService(repo: IPackRepository) {
-  return {
-    async getPacks(filters: PackFilters = {}, userId: string) {
-      await assertPermission(userId, PACK_PERMISSIONS.READ);
-      return await repo.findBy(filters);
-    },
+export class PackService {
+  constructor(private repo: IPackRepository) {}
 
-    async createPack(pack: PackData, userId: string, ip?: string, userAgent?: string) {
-      await assertPermission(userId, PACK_PERMISSIONS.CREATE);
+  async getPacks(filters: PackFilters = {}, userId: string) {
+    await assertPermission(userId, PACK_PERMISSIONS.READ);
+    return await this.repo.findBy(filters);
+  }
 
-      if (!pack.nombre) throw new Error('El nombre es obligatorio.');
-      if (!pack.creditos || pack.creditos <= 0) {
-        throw new Error('creditos debe ser un número positivo.');
-      }
-      if (!pack.duracion_dias || pack.duracion_dias <= 0) {
-        throw new Error('duracion_dias debe ser un número positivo.');
-      }
+  async createPack(pack: PackData, userId: string, ip?: string, userAgent?: string) {
+    await assertPermission(userId, PACK_PERMISSIONS.CREATE);
 
-      const existing = await repo.findById(pack.id);
-      if (existing) throw new Error('Ya existe un pack con este ID.');
+    if (!pack.nombre) throw new Error('El nombre es obligatorio.');
+    if (!pack.creditos || pack.creditos <= 0) {
+      throw new Error('creditos debe ser un número positivo.');
+    }
+    if (!pack.duracion_dias || pack.duracion_dias <= 0) {
+      throw new Error('duracion_dias debe ser un número positivo.');
+    }
 
-      await repo.create(pack);
+    const existing = await this.repo.findById(pack.id);
+    if (existing) throw new Error('Ya existe un pack con este ID.');
 
-      await auditLog('CREAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'packs_clases',
-        record_id: pack.id,
-        new_value: pack
-      });
+    await this.repo.create(pack);
 
-      return { id: pack.id };
-    },
+    await auditLog('CREAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'packs_clases',
+      record_id: pack.id,
+      new_value: pack
+    });
 
-    async updatePack(id: string, data: Partial<PackData>, userId: string, ip?: string, userAgent?: string) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, PACK_PERMISSIONS.UPDATE);
+    return { id: pack.id };
+  }
 
-      if (data.creditos !== undefined && data.creditos <= 0) {
-        throw new Error('creditos debe ser positivo.');
-      }
-      if (data.duracion_dias !== undefined && data.duracion_dias <= 0) {
-        throw new Error('duracion_dias debe ser positivo.');
-      }
+  async updatePack(id: string, data: Partial<PackData>, userId: string, ip?: string, userAgent?: string) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, PACK_PERMISSIONS.UPDATE);
 
-      const oldPack = await repo.findById(id);
-      if (!oldPack) throw new Error('Pack no encontrado.');
+    if (data.creditos !== undefined && data.creditos <= 0) {
+      throw new Error('creditos debe ser positivo.');
+    }
+    if (data.duracion_dias !== undefined && data.duracion_dias <= 0) {
+      throw new Error('duracion_dias debe ser positivo.');
+    }
 
-      await repo.update(id, data);
+    const oldPack = await this.repo.findById(id);
+    if (!oldPack) throw new Error('Pack no encontrado.');
 
-      await auditLog('ACTUALIZAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'packs_clases',
-        record_id: id,
-        old_value: oldPack,
-        new_value: { ...oldPack, ...data }
-      });
+    await this.repo.update(id, data);
 
-      return { id };
-    },
+    await auditLog('ACTUALIZAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'packs_clases',
+      record_id: id,
+      old_value: oldPack,
+      new_value: { ...oldPack, ...data }
+    });
 
-    async deletePack(id: string, userId: string, ip?: string, userAgent?: string) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, PACK_PERMISSIONS.DELETE);
+    return { id };
+  }
 
-      const pack = await repo.findById(id);
-      if (!pack) throw new Error('Pack no encontrado.');
+  async deletePack(id: string, userId: string, ip?: string, userAgent?: string) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, PACK_PERMISSIONS.DELETE);
 
-      await repo.delete(id);
+    const pack = await this.repo.findById(id);
+    if (!pack) throw new Error('Pack no encontrado.');
 
-      await auditLog('ELIMINAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'packs_clases',
-        record_id: id,
-        old_value: pack
-      });
+    await this.repo.delete(id);
 
-      return { id };
-    },
-  };
+    await auditLog('ELIMINAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'packs_clases',
+      record_id: id,
+      old_value: pack
+    });
+
+    return { id };
+  }
 }

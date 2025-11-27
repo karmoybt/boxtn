@@ -1,5 +1,5 @@
 import type { ClaseRecurrenteData, ClaseRecurrenteFilters } from '../../types/claseRecurrente';
-import type { IClaseRecurrenteRepository } from '../IClaseRecurrenteRepository';
+import type { IClaseRecurrenteRepository } from '../IClasesRecurrenteRepository';
 import type { InValue } from '@libsql/client';
 import client from '../../db/client';
 

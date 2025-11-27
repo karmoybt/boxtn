@@ -1,5 +1,5 @@
 {
-    "nuxt.isNuxtApp": true ,
+    "nuxt.isNuxtApp": false ,
     "nuxtr.vueFiles.template.defaultLanguage": "html",
     "nuxtr.vueFiles.firstTag": "template",
     "nuxtr.vueFiles.script.type": "setup",

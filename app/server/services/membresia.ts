@@ -1,98 +1,99 @@
 // app/server/services/membresia.ts
+
 import type { MembresiaData, MembresiaFilters } from '../types/membresia';
 import type { IMembresiaRepository } from '../repositories/IMembresiaRepository';
 import { assertPermission } from '../utils/assertPermission';
 import { auditLog } from '../log/useAuditLog';
 import { MEMBRESIA_PERMISSIONS } from '../../constants/permissions';
 
-export function makeMembresiaService(repo: IMembresiaRepository) {
-  return {
-    async getMembresias(filters: MembresiaFilters = {}, userId: string) {
-      await assertPermission(userId, MEMBRESIA_PERMISSIONS.READ);
-      return await repo.findBy(filters);
-    },
+export class MembresiaService {
+  constructor(private repo: IMembresiaRepository) {}
 
-    async createMembresia(
-      data: MembresiaData,
-      userId: string,
-      ip?: string,
-      userAgent?: string
-    ) {
-      await assertPermission(userId, MEMBRESIA_PERMISSIONS.CREATE);
+  async getMembresias(filters: MembresiaFilters = {}, userId: string) {
+    await assertPermission(userId, MEMBRESIA_PERMISSIONS.READ);
+    return await this.repo.findBy(filters);
+  }
 
-      if (!data.nombre) throw new Error('El nombre es obligatorio.');
-      if (!data.duracion_dias || data.duracion_dias <= 0) {
-        throw new Error('duracion_dias debe ser un número positivo.');
-      }
+  async createMembresia(
+    data: MembresiaData,
+    userId: string,
+    ip?: string,
+    userAgent?: string
+  ) {
+    await assertPermission(userId, MEMBRESIA_PERMISSIONS.CREATE);
 
-      const existing = await repo.findById(data.id);
-      if (existing) throw new Error('Ya existe una membresía con este ID.');
+    if (!data.nombre) throw new Error('El nombre es obligatorio.');
+    if (!data.duracion_dias || data.duracion_dias <= 0) {
+      throw new Error('duracion_dias debe ser un número positivo.');
+    }
 
-      await repo.create(data);
+    const existing = await this.repo.findById(data.id);
+    if (existing) throw new Error('Ya existe una membresía con este ID.');
 
-      await auditLog('CREAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'membresias',
-        record_id: data.id,
-        new_value: data
-      });
+    await this.repo.create(data);
 
-      return { id: data.id };
-    },
+    await auditLog('CREAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'membresias',
+      record_id: data.id,
+      new_value: data
+    });
 
-    async updateMembresia(
-      id: string,
-      data: Partial<MembresiaData>,
-      userId: string,
-      ip?: string,
-      userAgent?: string
-    ) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, MEMBRESIA_PERMISSIONS.UPDATE);
+    return { id: data.id };
+  }
 
-      if (data.duracion_dias !== undefined && data.duracion_dias <= 0) {
-        throw new Error('duracion_dias debe ser positivo.');
-      }
+  async updateMembresia(
+    id: string,
+    data: Partial<MembresiaData>,
+    userId: string,
+    ip?: string,
+    userAgent?: string
+  ) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, MEMBRESIA_PERMISSIONS.UPDATE);
 
-      const oldMembresia = await repo.findById(id);
-      if (!oldMembresia) throw new Error('Membresía no encontrada.');
+    if (data.duracion_dias !== undefined && data.duracion_dias <= 0) {
+      throw new Error('duracion_dias debe ser positivo.');
+    }
 
-      await repo.update(id, data);
+    const oldMembresia = await this.repo.findById(id);
+    if (!oldMembresia) throw new Error('Membresía no encontrada.');
 
-      await auditLog('ACTUALIZAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'membresias',
-        record_id: id,
-        old_value: oldMembresia,
-        new_value: { ...oldMembresia, ...data }
-      });
+    await this.repo.update(id, data);
 
-      return { id };
-    },
+    await auditLog('ACTUALIZAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'membresias',
+      record_id: id,
+      old_value: oldMembresia,
+      new_value: { ...oldMembresia, ...data }
+    });
 
-    async deleteMembresia(id: string, userId: string, ip?: string, userAgent?: string) {
-      if (!id) throw new Error('ID obligatorio.');
-      await assertPermission(userId, MEMBRESIA_PERMISSIONS.DELETE);
+    return { id };
+  }
 
-      const membresia = await repo.findById(id);
-      if (!membresia) throw new Error('Membresía no encontrada.');
+  async deleteMembresia(id: string, userId: string, ip?: string, userAgent?: string) {
+    if (!id) throw new Error('ID obligatorio.');
+    await assertPermission(userId, MEMBRESIA_PERMISSIONS.DELETE);
 
-      await repo.deleteById(id);
+    const membresia = await this.repo.findById(id);
+    if (!membresia) throw new Error('Membresía no encontrada.');
 
-      await auditLog('ELIMINAR', {
-        user_id: userId,
-        ip_address: ip,
-        user_agent: userAgent,
-        table: 'membresias',
-        record_id: id,
-        old_value: membresia
-      });
+    await this.repo.deleteById(id); // ⚠️ Asegúrate de que el repo tenga `deleteById`
 
-      return { id };
-    },
-  };
+    await auditLog('ELIMINAR', {
+      user_id: userId,
+      ip_address: ip,
+      user_agent: userAgent,
+      table: 'membresias',
+      record_id: id,
+      old_value: membresia
+    });
+
+    return { id };
+  }
 }
