@@ -1,16 +1,19 @@
-import { verifyToken } from '../utils/jwt' // tú implementas esto
-
 export default defineEventHandler(async (event) => {
-  const authHeader = getRequestHeader(event, 'authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return // sin autenticación, se maneja en la API
-  }
+  const { entity } = getRouterParams(event)
+  if (!entity) return
 
-  const token = authHeader.substring(7)
-  try {
-    const payload = await verifyToken(token)
-    event.context.auth = { userId: payload.sub }
-  } catch (err) {
-    // token inválido → se tratará como no autenticado
-  }
+  const userId = event.context.auth?.userId
+  if (!userId) throw createError({ statusCode: 401 })
+
+  const method = event.method
+  const id = getRouterParam(event, 'id')
+  const action = id
+    ? method === 'GET' ? 'read' : method === 'PUT' ? 'update' : 'delete'
+    : method === 'POST' ? 'create' : 'read'
+
+  const permissionBase = getPermissionBase(entity)
+  await assertPermission(userId, `${permissionBase}:${action}`, {
+    resource: entity,
+    resourceId: id || undefined
+  })
 })

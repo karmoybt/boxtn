@@ -5,6 +5,7 @@ import { assertPermission } from '../utils/getPermisos';
 import { auditLog } from '../log/useAuditLog';
 import { ASISTENCIA_PERMISSIONS } from '../../constants/permissions';
 
+
 export class AsistenciaService {
   constructor(private repo: IAsistenciaRepository) {}
 
@@ -13,7 +14,7 @@ export class AsistenciaService {
     return await this.repo.findBy(filters);
   }
 
-  async createAsistencia(data: AsistenciaData, userId: string, ip?: string, userAgent?: string) {
+  async create(data: AsistenciaData, userId: string, ip?: string, userAgent?: string) {
     await assertPermission(userId, ASISTENCIA_PERMISSIONS.CREATE);
     if (!data.usuario_id) throw new Error('usuario_id es obligatorio.');
     if (!data.instancia_clase_id) throw new Error('instancia_clase_id es obligatorio.');
@@ -35,7 +36,7 @@ export class AsistenciaService {
     return { id: data.id };
   }
 
-  async deleteAsistencia(id: string, userId: string, ip?: string, userAgent?: string) {
+  async delete(id: string, userId: string, ip?: string, userAgent?: string) {
     if (!id) throw new Error('ID obligatorio.');
     await assertPermission(userId, ASISTENCIA_PERMISSIONS.DELETE);
 

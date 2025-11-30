@@ -31,23 +31,32 @@ export class SqliteReservaRepository implements IReservaRepository {
     return row ? mapRowToReserva(row) : null;
   }
 
-  async findBy(usuario_id: string, filters: ReservaFilters): Promise<ReservaData[]> {
-    const conditions: string[] = ['usuario_id = ?'];
-    const params: InValue[] = [usuario_id];
+ async findBy(filters: ReservaFilters = {}): Promise<ReservaData[]> {
+  const conditions: string[] = [];
+  const params: InValue[] = [];
 
-    if (filters.instancia_clase_id !== undefined) {
-      conditions.push('instancia_clase_id = ?');
-      params.push(filters.instancia_clase_id);
-    }
-    if (filters.estado_id !== undefined) {
-      conditions.push('estado_id = ?');
-      params.push(filters.estado_id);
-    }
-
-    const query = `SELECT id, usuario_id, instancia_clase_id, estado_id FROM reservas WHERE ${conditions.join(' AND ')}`;
-    const result = await client.execute(query, params);
-    return result.rows.map(mapRowToReserva);
+  // Si necesitas filtrar por usuario_id, obténlo de filters
+  if (filters.usuario_id !== undefined) {
+    conditions.push('usuario_id = ?');
+    params.push(filters.usuario_id);
   }
+  if (filters.instancia_clase_id !== undefined) {
+    conditions.push('instancia_clase_id = ?');
+    params.push(filters.instancia_clase_id);
+  }
+  if (filters.estado_id !== undefined) {
+    conditions.push('estado_id = ?');
+    params.push(filters.estado_id);
+  }
+
+  let query = 'SELECT id, usuario_id, instancia_clase_id, estado_id FROM reservas';
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  const result = await client.execute(query, params);
+  return result.rows.map(mapRowToReserva);
+}
 
   async create(data: ReservaData): Promise<void> {
     await client.execute(

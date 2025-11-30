@@ -66,7 +66,7 @@ export class SqliteMembresiaRepository implements IMembresiaRepository {
     await client.execute(query, [...values, id]);
   }
 
-  async deleteById(id: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     await client.execute('DELETE FROM membresias WHERE id = ?', [id]);
   }
 }
