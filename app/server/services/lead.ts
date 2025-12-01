@@ -9,12 +9,12 @@ import { LEAD_PERMISSIONS } from '../../constants/permissions';
 export class LeadService {
   constructor(private repo: ILeadRepository) {}
 
-  async getLeads(filters: LeadFilters = {}, userId: string) {
+  async get(filters: LeadFilters = {}, userId: string) {
     await assertPermission(userId, LEAD_PERMISSIONS.READ);
     return await this.repo.findBy(filters);
   }
 
-  async createLead(data: LeadData, userId: string, ip?: string, userAgent?: string) {
+  async create(data: LeadData, userId: string, ip?: string, userAgent?: string) {
     await assertPermission(userId, LEAD_PERMISSIONS.CREATE);
 
     if (!data.nombre) throw new Error('El nombre es obligatorio.');
@@ -37,7 +37,7 @@ export class LeadService {
     return { id: data.id };
   }
 
-  async updateLead(
+  async update(
     id: string,
     data: Partial<LeadData>,
     userId: string,
@@ -65,7 +65,7 @@ export class LeadService {
     return { id };
   }
 
-  async deleteLead(id: string, userId: string, ip?: string, userAgent?: string) {
+  async delete(id: string, userId: string, ip?: string, userAgent?: string) {
     if (!id) throw new Error('ID obligatorio.');
     await assertPermission(userId, LEAD_PERMISSIONS.DELETE);
 

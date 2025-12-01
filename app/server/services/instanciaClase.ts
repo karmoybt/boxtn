@@ -9,12 +9,12 @@ import { randomUUID } from 'node:crypto';
 export class InstanciaClaseService {
   constructor(private repo: IInstanciaClaseRepository) {}
 
-  async getInstanciasClase(filters: InstanciaClaseFilters = {}, userId: string) {
+  async get(filters: InstanciaClaseFilters = {}, userId: string) {
     await assertPermission(userId, INSTANCIA_CLASE_PERMISSIONS.READ);
     return await this.repo.findBy(filters);
   }
 
-  async createInstanciaClase(
+  async create(
     data: InstanciaClaseData,
     userId: string,
     ip?: string,
@@ -59,7 +59,7 @@ export class InstanciaClaseService {
     return { id };
   }
 
-  async updateInstanciaClase(
+  async update(
     id: string,
     data: Partial<InstanciaClaseData>,
     userId: string,
@@ -110,7 +110,7 @@ export class InstanciaClaseService {
     return { id };
   }
 
-  async deleteInstanciaClase(id: string, userId: string, ip?: string, userAgent?: string) {
+  async delete(id: string, userId: string, ip?: string, userAgent?: string) {
     if (!id) throw new Error('ID obligatorio.');
     await assertPermission(userId, INSTANCIA_CLASE_PERMISSIONS.DELETE);
 

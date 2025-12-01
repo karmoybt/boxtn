@@ -9,12 +9,12 @@ import { CLASE_RECURRENTE_PERMISSIONS } from '../../constants/permissions';
 export class ClaseRecurrenteService {
   constructor(private repo: IClaseRecurrenteRepository) {}
 
-  async getClasesRecurrentes(filters: ClaseRecurrenteFilters = {}, userId: string) {
+  async get(filters: ClaseRecurrenteFilters = {}, userId: string) {
     await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.READ);
     return await this.repo.findBy(filters);
   }
 
-  async createClaseRecurrente(
+  async create(
     data: ClaseRecurrenteData,
     userId: string,
     ip?: string,
@@ -53,7 +53,7 @@ export class ClaseRecurrenteService {
     return { id: data.id };
   }
 
-  async updateClaseRecurrente(
+  async update(
     id: string,
     data: Partial<ClaseRecurrenteData>,
     userId: string,
@@ -91,7 +91,7 @@ export class ClaseRecurrenteService {
     return { id };
   }
 
-  async deleteClaseRecurrente(id: string, userId: string, ip?: string, userAgent?: string) {
+  async delete(id: string, userId: string, ip?: string, userAgent?: string) {
     if (!id) throw new Error('ID obligatorio.');
     await assertPermission(userId, CLASE_RECURRENTE_PERMISSIONS.DELETE);
 

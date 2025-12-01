@@ -14,7 +14,7 @@ export class MembresiaService {
     return await this.repo.findBy(filters);
   }
 
-  async createMembresia(
+  async create(
     data: MembresiaData,
     userId: string,
     ip?: string,
@@ -44,7 +44,7 @@ export class MembresiaService {
     return { id: data.id };
   }
 
-  async updateMembresia(
+  async update(
     id: string,
     data: Partial<MembresiaData>,
     userId: string,
@@ -76,7 +76,7 @@ export class MembresiaService {
     return { id };
   }
 
-  async deleteMembresia(id: string, userId: string, ip?: string, userAgent?: string) {
+  async delete(id: string, userId: string, ip?: string, userAgent?: string) {
     if (!id) throw new Error('ID obligatorio.');
     await assertPermission(userId, MEMBRESIA_PERMISSIONS.DELETE);
 
